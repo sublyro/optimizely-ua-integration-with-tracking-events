@@ -42,7 +42,7 @@ window.integration = {
       
       var itv = setInterval(function() {
      	if (window.ga && typeof window.ga === 'function') {
-        		window.ga('set', 'referrer', optimizely.data.state.redirectExperiment.referrer);
+            window.ga('set', 'referrer', optimizely.data.state.redirectExperiment.referrer);
             clearInterval(itv);
      	}   
      }, 50);
