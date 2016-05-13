@@ -11,9 +11,7 @@ window.integration = {
   makeRequest: function(experimentId, variationId) {
     var experimentName = optimizely.data.experiments[experimentId].name;
     var variationName = optimizely.data.state.variationNamesMap[experimentId];
-    
-    console.log(experimentName + ' ' + variationName);
-    
+        
     var itv = setInterval(function() {
      	if (window.ga && typeof window.ga === 'function') {
 	          window.ga('send', 'event', 'optimizely', variationName, variationName, {'nonInteraction': 1});
@@ -42,7 +40,6 @@ window.integration = {
   fixReferrer: function() {
     if (optimizely.data.state.redirectExperiment && optimizely.data.state.redirectExperiment.referrer) {
       
-      console.log("Setting referrer to " +optimizely.data.state.redirectExperiment.referrer);
       var itv = setInterval(function() {
      	if (window.ga && typeof window.ga === 'function') {
         		window.ga('set', 'referrer', optimizely.data.state.redirectExperiment.referrer);
