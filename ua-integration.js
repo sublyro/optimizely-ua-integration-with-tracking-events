@@ -126,7 +126,7 @@ window.integration = {
         }
       }
 
-      // poll until everything that can be activated as been activated
+      // poll until everything that can be activated has been activated
       if (possibleExperiments.length < 1) {
         clearInterval(integrationItv);
       }
