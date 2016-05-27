@@ -11,12 +11,31 @@ window.integration = {
   makeRequest: function(experimentId, variationId) {
     var experimentName = optimizely.data.experiments[experimentId].name;
     var variationName = optimizely.data.state.variationNamesMap[experimentId];
+
+    experimentName = experimentName.replace(new RegExp(" ", 'g'), "_");
+    variationName = variationName.replace(new RegExp(" ", 'g'), "_");
+
+    var normalisedName = 'Optimizely_' +experimentName +' (' +experimentId +'): ' +variationName;
         
     var itv = setInterval(function() {
-     	if (window.ga && typeof window.ga === 'function') {
-	          window.ga('send', 'event', 'optimizely', variationName, variationName, {'nonInteraction': 1});
-            clearInterval(itv);
-     	}   
+      if (window.ga && typeof window.ga === 'function') {
+
+        clearInterval(itv);
+          if (optimizely.allExperiments[experimentId] && optimizely.allExperiments[experimentId].universal_analytics && optimizely.allExperiments[experimentId].universal_analytics.slot) {
+            var slot = optimizely.allExperiments[experimentId].universal_analytics.slot;
+            var param = {};
+            param['nonInteraction'] = 1;
+            param['hitCallback'] = window.optly.UAEventTrackingCallback;
+            param['dimension' +slot] = normalisedName;
+            //window.ga('send', 'event', 'optimizely', experimentId +" " +experimentName, variationName, {'nonInteraction': 1, slot: this.normaliseOptimizelyDimensionName(experimentName, experimentId, variationName), 'hitCallback': window.optly.UAEventTrackingCallback});
+            window.ga('send', 'event', 'optimizely', experimentId +" " +experimentName, variationName, param);
+          } else {
+            console.log("making request to GA");
+            window.ga('send', 'event', 'optimizely', experimentId +" " +experimentName, variationName, {'nonInteraction': 1, 'hitCallback': window.optly.UAEventTrackingCallback });
+          }
+          window.optimizely.push(["trackEvent", "ga_tracking"]);
+            
+      }   
      }, 50);
   },
 
@@ -41,13 +60,13 @@ window.integration = {
     if (optimizely.data.state.redirectExperiment && optimizely.data.state.redirectExperiment.referrer) {
       
       var itv = setInterval(function() {
-     	if (window.ga && typeof window.ga === 'function') {
+      if (window.ga && typeof window.ga === 'function') {
             window.ga('set', 'referrer', optimizely.data.state.redirectExperiment.referrer);
             clearInterval(itv);
-     	}   
+      }   
      }, 50);
       
-    	 
+       
     }
   },
   /**
@@ -134,10 +153,40 @@ window.integration = {
   }
 };
 
-// Register the integration as soon as the integrator is initialised
-var analyticsItv = setInterval(function() {
-  if (window.integrator) {
-    window.integrator.registerIntegration(window.integration);
-    clearInterval(analyticsItv);
-  }
-}, 50);
+
+window.optly.UAEventTrackingCallback = function() { window.optimizely.push(["trackEvent", "ga_tracking_callback"]); };
+
+
+var loadScript = function(location, callback){
+   var fileRef = document.createElement('script');
+   fileRef.setAttribute('type','text/javascript');
+
+   if (callback) {
+     if (fileRef.readyState) {  // IE
+       fileRef.onreadystatechange = function() {
+         if (fileRef.readyState == 'loaded' || fileRef.readyState == 'complete') {
+           fileRef.onreadystatechange = null;
+           callback();
+         }
+       };
+     } else {  // Non-IE
+       fileRef.onload = function(){
+         callback();
+       };
+     }
+   }
+
+   fileRef.setAttribute('src', location);
+   document.head.appendChild(fileRef);
+ };
+
+ loadScript('https://cdn.rawgit.com/optimizely/Analytics-JS/master/integrator.js', function() {
+   // Register the integration as soon as the integrator is initialised
+  var analyticsItv = setInterval(function() {
+    if (window.integrator) {
+      console.log("Framework is ready");
+      window.integrator.registerIntegration(window.integration);
+      clearInterval(analyticsItv);
+    }
+  }, 50);
+ });
