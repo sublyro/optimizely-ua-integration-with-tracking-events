@@ -20,18 +20,23 @@ window.integration = {
     var itv = setInterval(function() {
       if (window.ga && typeof window.ga === 'function') {
 
+        var tracker = "";
+        if (optimizely.allExperiments[experimentId] && optimizely.allExperiments[experimentId].universal_analytics && optimizely.allExperiments[experimentId].universal_analytics.tracker) {
+          tracker = optimizely.allExperiments[experimentId].universal_analytics.tracker +".";
+        } 
+
         clearInterval(itv);
-          if (optimizely.allExperiments[experimentId] && optimizely.allExperiments[experimentId].universal_analytics && optimizely.allExperiments[experimentId].universal_analytics.slot) {
+        if (optimizely.allExperiments[experimentId] && optimizely.allExperiments[experimentId].universal_analytics && optimizely.allExperiments[experimentId].universal_analytics.slot) {
             var slot = optimizely.allExperiments[experimentId].universal_analytics.slot;
             var param = {};
             param['nonInteraction'] = 1;
             param['hitCallback'] = window.optly.UAEventTrackingCallback;
             param['dimension' +slot] = normalisedName;
             //window.ga('send', 'event', 'optimizely', experimentId +" " +experimentName, variationName, {'nonInteraction': 1, slot: this.normaliseOptimizelyDimensionName(experimentName, experimentId, variationName), 'hitCallback': window.optly.UAEventTrackingCallback});
-            window.ga('send', 'event', 'optimizely', experimentId +" " +experimentName, variationName, param);
+            window.ga(tracker +'send', 'event', 'optimizely', experimentId +" " +experimentName, variationName, param);
           } else {
             console.log("making request to GA");
-            window.ga('send', 'event', 'optimizely', experimentId +" " +experimentName, variationName, {'nonInteraction': 1, 'hitCallback': window.optly.UAEventTrackingCallback });
+            window.ga(tracker +'send', 'event', 'optimizely', experimentId +" " +experimentName, variationName, {'nonInteraction': 1, 'hitCallback': window.optly.UAEventTrackingCallback });
           }
           window.optimizely.push(["trackEvent", "ga_tracking"]);
             
