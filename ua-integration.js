@@ -12,33 +12,34 @@ window.integration = {
     var experimentName = optimizely.data.experiments[experimentId].name;
     var variationName = optimizely.data.state.variationNamesMap[experimentId];
 
-    experimentName = experimentName.replace(new RegExp(" ", 'g'), "_");
-    variationName = variationName.replace(new RegExp(" ", 'g'), "_");
+    experimentName = experimentName.replace(new RegExp(" ", 'g'), "_").replace(new RegExp("/", 'g'), "_");
+    variationName = variationName.replace(new RegExp(" ", 'g'), "_").replace(new RegExp("/", 'g'), "_");
 
     var normalisedName = 'Optimizely_' +experimentName +' (' +experimentId +'): ' +variationName;
         
     var itv = setInterval(function() {
+      // wait for GA to be available
       if (window.ga && typeof window.ga === 'function') {
 
+        clearInterval(itv);
+
+        // fetch the custom dimension (only if integrtion is enabled inside Optimizely)
+        var param = {};
+        param['nonInteraction'] = 1;
+        param['hitCallback'] = window.optly.UAEventTrackingCallback;
+        if (optimizely.allExperiments[experimentId] && optimizely.allExperiments[experimentId].universal_analytics && optimizely.allExperiments[experimentId].universal_analytics.slot) {
+          var slot = optimizely.allExperiments[experimentId].universal_analytics.slot;
+          param['dimension' +slot] = normalisedName;
+        }
+
+        // check if this integration is setup to use a custom tracker (only if integrtion is enabled inside Optimizely)
         var tracker = "";
         if (optimizely.allExperiments[experimentId] && optimizely.allExperiments[experimentId].universal_analytics && optimizely.allExperiments[experimentId].universal_analytics.tracker) {
           tracker = optimizely.allExperiments[experimentId].universal_analytics.tracker +".";
         } 
 
-        clearInterval(itv);
-        if (optimizely.allExperiments[experimentId] && optimizely.allExperiments[experimentId].universal_analytics && optimizely.allExperiments[experimentId].universal_analytics.slot) {
-            var slot = optimizely.allExperiments[experimentId].universal_analytics.slot;
-            var param = {};
-            param['nonInteraction'] = 1;
-            param['hitCallback'] = window.optly.UAEventTrackingCallback;
-            param['dimension' +slot] = normalisedName;
-            //window.ga('send', 'event', 'optimizely', experimentId +" " +experimentName, variationName, {'nonInteraction': 1, slot: this.normaliseOptimizelyDimensionName(experimentName, experimentId, variationName), 'hitCallback': window.optly.UAEventTrackingCallback});
-            window.ga(tracker +'send', 'event', 'optimizely', experimentId +" " +experimentName, variationName, param);
-          } else {
-            console.log("making request to GA");
-            window.ga(tracker +'send', 'event', 'optimizely', experimentId +" " +experimentName, variationName, {'nonInteraction': 1, 'hitCallback': window.optly.UAEventTrackingCallback });
-          }
-          window.optimizely.push(["trackEvent", "ga_tracking"]);
+        window.ga(tracker +'send', 'event', 'optimizely', experimentId +" " +experimentName, variationName, param);
+        window.optimizely.push(["trackEvent", "ga_tracking"]);
             
       }   
      }, 50);
@@ -159,6 +160,7 @@ window.integration = {
 };
 
 
+// defines a callback function called everytime the tracking event is succesfully received by GA
 window.optly.UAEventTrackingCallback = function() { window.optimizely.push(["trackEvent", "ga_tracking_callback"]); };
 
 
@@ -189,7 +191,6 @@ var loadScript = function(location, callback){
    // Register the integration as soon as the integrator is initialised
   var analyticsItv = setInterval(function() {
     if (window.integrator) {
-      console.log("Framework is ready");
       window.integrator.registerIntegration(window.integration);
       clearInterval(analyticsItv);
     }
