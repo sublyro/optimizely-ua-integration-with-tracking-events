@@ -12,8 +12,8 @@ window.integration = {
     var experimentName = optimizely.data.experiments[experimentId].name;
     var variationName = optimizely.data.state.variationNamesMap[experimentId];
 
-    experimentName = experimentName.replace(new RegExp(" ", 'g'), "_").replace(new RegExp("/", 'g'), "_");
-    variationName = variationName.replace(new RegExp(" ", 'g'), "_").replace(new RegExp("/", 'g'), "_");
+    experimentName = experimentName.replace(new RegExp(" ", 'g'), "_").replace(new RegExp("/", 'g'), "_").replace(new RegExp("\\[", 'g'), "").replace(new RegExp("\\]", 'g'), "");
+    variationName = variationName.replace(new RegExp(" ", 'g'), "_").replace(new RegExp("/", 'g'), "_").replace(new RegExp("\\[", 'g'), "").replace(new RegExp("\\]", 'g'), "");
 
     var normalisedName = 'Optimizely_' +experimentName +' (' +experimentId +'): ' +variationName;
         
