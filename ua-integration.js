@@ -9,6 +9,7 @@ window.integration = {
    * @param {Array<string>} variationIds
    */
   makeRequest: function(experimentId, variationId) {
+    window.optimizely.push(["trackEvent", "ga_tracking_makerequest"]);
     var experimentName = optimizely.data.experiments[experimentId].name;
     var variationName = optimizely.data.state.variationNamesMap[experimentId];
 
@@ -16,9 +17,11 @@ window.integration = {
     variationName = variationName.replace(new RegExp(" ", 'g'), "_").replace(new RegExp("/", 'g'), "_").replace(new RegExp("\\[", 'g'), "").replace(new RegExp("\\]", 'g'), "");
 
     var normalisedName = 'Optimizely_' +experimentName +' (' +experimentId +'): ' +variationName;
-        
+    
+    window.optly_t1 = Date.now();
     var itv = setInterval(function() {
       // wait for GA to be available
+      window.optly_t2 = Date.now();
       if (window.ga && typeof window.ga === 'function') {
 
         clearInterval(itv);
@@ -39,9 +42,12 @@ window.integration = {
         } 
 
         window.ga(tracker +'send', 'event', 'optimizely', experimentId +" " +experimentName, variationName, param);
-        window.optimizely.push(["trackEvent", "ga_tracking"]);
+        window.optimizely.push(["trackEvent", "ga_tracking", {"revenue": (window.optly_t2 - window.optly_t1)}]);
             
-      }   
+      } else if ((window.optly_t2 - window.optly_t1) > 10000) {
+        window.optimizely.push(["trackEvent", "ga_tracking_timeout"]);
+        clearInterval(itv);
+      }
      }, 50);
   },
 
@@ -51,6 +57,7 @@ window.integration = {
    * and fix the referrer in redirect experiments
    */
   initialize: function() {
+    window.optimizely.push(["trackEvent", "ga_tracking_init"]);
     // in case of redirect experiment we might want to fix the referrer value sent to the analytics platform
     if (optimizely.data.state.redirectExperiment !== undefined) {
       this.fixReferrer();
@@ -187,10 +194,12 @@ var loadScript = function(location, callback){
    document.head.appendChild(fileRef);
  };
 
- loadScript('https://cdn.rawgit.com/optimizely/Analytics-JS/master/integrator.js', function() {
+window.optimizely.push(["trackEvent", "ga_tracking_integrator_start"]);
+loadScript('https://cdn.rawgit.com/optimizely/Analytics-JS/master/integrator.js', function() {
    // Register the integration as soon as the integrator is initialised
   var analyticsItv = setInterval(function() {
     if (window.integrator) {
+      window.optimizely.push(["trackEvent", "ga_tracking_integrator_ready"]);
       window.integrator.registerIntegration(window.integration);
       clearInterval(analyticsItv);
     }
